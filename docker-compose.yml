@@ -4,7 +4,9 @@ services:
   # ─── PostgreSQL with PostGIS + pgvector ───────────────────────────
   db:
     # This image has PostgreSQL 15 + PostGIS + pgvector pre-installed
-    image: pgvector/pgvector:pg15
+    build:
+      context: ./backend/scripts
+      dockerfile: Dockerfile.db
     container_name: drivelegal_db
     
     # Restart automatically if it crashes
