@@ -1,3 +1,65 @@
-# Docker services will be configured on Day 2
-version: '3.8'
-services: {}
+
+services:
+
+  # ─── PostgreSQL with PostGIS + pgvector ───────────────────────────
+  db:
+    # This image has PostgreSQL 15 + PostGIS + pgvector pre-installed
+    image: pgvector/pgvector:pg15
+    container_name: drivelegal_db
+    
+    # Restart automatically if it crashes
+    restart: unless-stopped
+    
+    # Environment variables — database credentials
+    environment:
+      POSTGRES_DB: drivelegal          # database name
+      POSTGRES_USER: drivelegal        # username
+      POSTGRES_PASSWORD: drivelegal123 # password
+    
+    # Ports — maps container port 5432 to your computer's port 5432
+    # Format: "your_computer:container"
+    ports:
+      - "5432:5432"
+    
+    # Volumes — persists database data even if container is stopped
+    # Without this, all data is lost when container stops
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    
+    # Health check — Docker will wait until DB is ready before
+    # starting other services that depend on it
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drivelegal -d drivelegal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis Cache ──────────────────────────────────────────────────
+  redis:
+    # Official Redis 7 image with Alpine Linux (lightweight)
+    image: redis:7-alpine
+    container_name: drivelegal_redis
+    restart: unless-stopped
+    
+    ports:
+      - "6379:6379"
+    
+    # Persist Redis data
+    volumes:
+      - redis_data:/data
+    
+    # Redis command — enables data persistence
+    command: redis-server --appendonly yes
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ─── Volumes ────────────────────────────────────────────────────────
+# Named volumes — Docker manages these storage spaces
+volumes:
+  postgres_data:  # stores all PostgreSQL data
+  redis_data:     # stores all Redis data
