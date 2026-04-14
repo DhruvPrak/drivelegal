@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
-from app.routers import laws
+from app.routers import laws, fines, rto
 
 load_dotenv()
 
@@ -23,8 +23,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Include all routers
 app.include_router(laws.router)
+app.include_router(fines.router)
+app.include_router(rto.router)
 
 @app.get("/")
 def root():
